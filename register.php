@@ -14,25 +14,27 @@
     <?php include('errors.php'); ?>
     <div class="input-group">
         <label>Username
-        <input type="text" id="username" name="username" value="<?php echo $username; ?>">
+        <input type="text" id="username" name="username" value="<?php echo $username; ?>"
+        placeholder="Enter username">
         </label>
         <small class="username-error"></small>
     </div>
     <div class="input-group">
         <label>Email
-        <input type="email" id="email" name="email" value="<?php echo $email; ?>">
+        <input type="email" id="email" name="email" value="<?php echo $email; ?>"
+        placeholder="Enter your email...">
         </label>
         <small class="email-error"></small>
     </div>
     <div class="input-group">
         <label>Password
-        <input id="password" type="password" name="password_1">
+        <input id="password" type="password" name="password_1" placeholder="Enter Password...">
         </label>
         <small class="password-error"></small>
     </div>
     <div class="input-group">
         <label>Confirm password
-        <input id="password2" type="password" name="password_2">
+        <input id="password2" type="password" name="password_2" placeholder="Confirm your password...">
         </label>
         <small class="password2-error"></small>
     </div>

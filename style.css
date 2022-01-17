@@ -1,3 +1,4 @@
+@import url(https://fonts.googleapis.com/css?family=Montserrat:400,700);
 * {
     margin: 0px;
     padding: 0px;
@@ -5,6 +6,7 @@
 body {
     font-size: 120%;
     background: #F8F8FF;
+    font-family: 'Montserrat', sans-serif;
 }
 
 .header {
@@ -41,6 +43,7 @@ form, .content {
     font-size: 16px;
     border-radius: 5px;
     border: 1px solid gray;
+    margin-top: 10px;
 }
 .btn {
     padding: 10px;
