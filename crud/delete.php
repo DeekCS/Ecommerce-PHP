@@ -37,6 +37,14 @@ if (isset($_GET['id'])) {
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
 </head>
 <body>
+<nav class="navtop">
+    <div>
+        <h1>Website Title</h1>
+        <a href="../index.php"><i class="fas fa-home"></i>Home</a>
+        <a href="../crud/read.php"><i class="fas fa-address-book"></i>Contacts</a>
+        <a href="../register.php"><i class="fas fa-register"></i>Register</a>
+    </div>
+</nav>
 <div class="content delete">
     <h2>Delete Contact #<?=$contact['id']?></h2>
     <?php if ($msg): ?>
