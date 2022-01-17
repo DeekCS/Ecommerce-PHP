@@ -1,16 +1,27 @@
-<?php include('server.php') ?>
+<?php include('./server.php') ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Registration system PHP and MySQL</title>
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
 </head>
 <body>
+<nav class="navtop">
+    <div>
+        <h1>Website Title</h1>
+        <a href="index.php"><i class="fas fa-home"></i>Home</a>
+        <a href="crud/read.php"><i class="fas fa-address-book"></i>Contacts</a>
+        <a href="register.php"><i class="fas fa-register"></i>Register</a>
+    </div>
+</nav>
+
 <div class="header">
     <h2>Login</h2>
 </div>
 
-<form method="post" action="login.php">
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
     <?php include('errors.php'); ?>
     <div class="input-group">
         <label>Username

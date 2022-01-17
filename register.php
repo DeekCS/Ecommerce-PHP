@@ -1,17 +1,26 @@
-<?php include('server.php') ?>
-<!DOCTYPE html>
+<?php include('./server.php') ?>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Registration system PHP and MySQL</title>
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
 </head>
 <body>
+<nav class="navtop">
+    <div>
+        <h1>Website Title</h1>
+        <a href="index.php"><i class="fas fa-home"></i>Home</a>
+        <a href="crud/read.php"><i class="fas fa-address-book"></i>Contacts</a>
+        <a href="register.php"><i class="fas fa-register"></i>Register</a>
+    </div>
+</nav>
 <div class="header">
     <h2>Register</h2>
 </div>
 
-<form id="register" method="post" action="register.php">
-    <?php include('errors.php'); ?>
+<form id="register" method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+    <?php include('./errors.php'); ?>
     <div class="input-group">
         <label>Username
         <input type="text" id="username" name="username" value="<?php echo $username; ?>"
@@ -45,6 +54,6 @@
         Already a member? <a href="login.php">Sign in</a>
     </p>
 </form>
-<script src="validate.js"></script>
+<script src="script/validate.js"></script>
 </body>
 </html>

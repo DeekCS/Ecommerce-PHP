@@ -1,17 +1,10 @@
 <?php
-session_start();
+include './connection.php';
 
 // initializing variables
 $username = "";
 $email    = "";
 $errors = array();
-
-try {
-  $db = new PDO('mysql:host=localhost;dbname=php', 'root', '');
-  $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-  echo "Connection failed: " . $e->getMessage();
-}
 
 // REGISTER USER
 if (isset($_POST['reg_user'])) {
@@ -43,15 +36,17 @@ if (isset($_POST['reg_user'])) {
     if (isset($user) && $user) { // if user exists
       if ($user['username'] === $username) {
         $errors[] = "Username already exists";
+        echo "<script>alert('Username already exists')</script>";
       }
 
       if ($user['email'] === $email) {
         $errors[] = "email already exists";
+        echo "<script>alert('email already exists')</script>";
       }
     }
 
   // Finally, register user if there are no errors in the form
-  if (count($errors) === 0) {
+  if (empty($errors)) {
   	$password = md5($password_1);//encrypt the password before saving in the database
 
   	$query = "INSERT INTO users (username, email, password)
@@ -77,17 +72,22 @@ if (isset($_POST['login_user'])) {
   	$errors[] = "Password is required";
   }
 
-  if (count($errors) === 0) {
-  	$password = md5($password);
-  	$query = "SELECT * FROM users WHERE username='$username' AND password='$password'";
-  	$results = $db->query($query);
-  	if ($results->rowCount() === 1) {
-  	  $_SESSION['username'] = $username;
-  	  $_SESSION['success'] = "You are now logged in";
-  	  header('location: index.php');
-  	}else {
-  		$errors[] = "Wrong username/password combination";
-  	}
-  }
+    if (empty($errors)) {
+        $password = md5($password);
+        $query = "SELECT * FROM users WHERE username='$username' AND password='$password'" ;
+        //handling the result
+        if (isset($db)) {
+            $result = $db->query($query);
+        }
+        if (isset($result)) {
+            $user = $result->fetch(PDO::FETCH_ASSOC);
+        }
+        if (isset($user) && $user) {
+            $_SESSION['username'] = $username;
+            $_SESSION['success'] = "You are logged in";
+            header('location: index.php');
+        } else {
+            echo "<script>alert('Wrong username/password combination')</script>";
+        }
+    }
 }
-
