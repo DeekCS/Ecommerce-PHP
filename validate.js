@@ -22,7 +22,7 @@ username.onkeyup = function () {
 
 email.onkeyup = function () {
     // regular expression for email validation
-    let emailReg = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
+    let emailReg = /^([a-zA-Z0-9_\-.]+)@([a-zA-Z0-9_\-.]+)\.([a-zA-Z]{2,5})$/;
     // check if email is valid with regular expression
     if (emailReg.test(email.value) === false) {
         emailError[0].innerHTML = 'Invalid Email Address';
