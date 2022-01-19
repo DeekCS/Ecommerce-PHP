@@ -1,5 +1,5 @@
 <?php
-include './connection.php';
+require_once('connection.php');
 
 // initializing variables
 $username = "";
@@ -26,44 +26,42 @@ if (isset($_POST['reg_user'])) {
   // first check the database to make sure
   // a user does not already exist with the same username and/or email
   $user_check_query = "SELECT * FROM users WHERE username='$username' OR email='$email' LIMIT 1";
-    if (isset($db)) {
-        $result = $db->query($user_check_query);
-    }
-    if (isset($result)) {
-        $user = $result->fetch(PDO::FETCH_ASSOC);
+  $stmt = $pdo->prepare($user_check_query);
+  $stmt->execute();
+  $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+  if ($user) { // if user exists
+    if ($user['username'] === $username) {
+      $errors[] = "Username already exists";
     }
 
-    if (isset($user) && $user) { // if user exists
-      if ($user['username'] === $username) {
-        $errors[] = "Username already exists";
-        echo "<script>alert('Username already exists')</script>";
-      }
-
-      if ($user['email'] === $email) {
-        $errors[] = "email already exists";
-        echo "<script>alert('email already exists')</script>";
-      }
+    if ($user['email'] === $email) {
+      $errors[] = "email already exists";
     }
+  }
 
   // Finally, register user if there are no errors in the form
   if (empty($errors)) {
   	$password = md5($password_1);//encrypt the password before saving in the database
 
-  	$query = "INSERT INTO users (username, email, password)
+  	$query = "INSERT INTO users (username, email, password) 
   			  VALUES('$username', '$email', '$password')";
-      if (isset($db)) {
-          $db->exec($query);
-      }
-  	$_SESSION['username'] = $username;
-  	$_SESSION['success'] = "You are
-  	logged in";
+  	$stmt = $pdo->query($query);
+      $_SESSION['username'] = $username;
+      $_SESSION['email'] = $email;
+  	$_SESSION['success'] = "You are now logged in";
   	header('location: index.php');
   }
 }
 
+
+
 if (isset($_POST['login_user'])) {
   $username = $_POST['username'];
-  $password = $_POST['password'];
+    $email = $_POST['email'];
+
+
+    $password = md5($_POST['password']);
 
   if (empty($username)) {
   	$errors[] = "Username is required";
@@ -73,21 +71,24 @@ if (isset($_POST['login_user'])) {
   }
 
     if (empty($errors)) {
-        $password = md5($password);
         $query = "SELECT * FROM users WHERE username='$username' AND password='$password'" ;
+        $stmt = $pdo->query($query);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
         //handling the result
-        if (isset($db)) {
-            $result = $db->query($query);
-        }
-        if (isset($result)) {
-            $user = $result->fetch(PDO::FETCH_ASSOC);
-        }
-        if (isset($user) && $user) {
+        if($data) {
             $_SESSION['username'] = $username;
-            $_SESSION['success'] = "You are logged in";
-            header('location: index.php');
+            $_SESSION['email'] = $email;
+
+            $_SESSION['success'] = "You are now logged in";
+            if ($data['isAdmin'] ===1) {
+                $_SESSION['isAdmin'] = true;
+                header('location: CoolAdmin/dashboard.php');
+            } else {
+                $_SESSION['isAdmin'] = false;
+                header('location: index.php');
+            }
         } else {
-            echo "<script>alert('Wrong username/password combination')</script>";
+            $errors[] = "Wrong username/password combination";
         }
     }
 }

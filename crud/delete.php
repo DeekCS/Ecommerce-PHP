@@ -1,7 +1,7 @@
 <?php
 include '../connection.php';
 
-$pdo = pdo_connect_mysql();
+
 $msg = '';
 // Check that the contact ID exists
 if (isset($_GET['id'])) {

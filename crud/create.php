@@ -1,4 +1,5 @@
 <?php
+
 include '../connection.php';
 
 if (!isset($_SESSION['username'])) {
@@ -7,7 +8,6 @@ if (!isset($_SESSION['username'])) {
     header('location: ../login.php');
 }
 
-$pdo = pdo_connect_mysql();
 $msg = '';
 // Check if POST data is not empty
 if (!empty($_POST)) {
