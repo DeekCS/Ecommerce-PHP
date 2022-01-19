@@ -1,14 +1,23 @@
 <?php
+session_start();
 include '../connection.php';
-if (!isset($_SESSION['username'])) {
+
+if (!isset($_SESSION['id'])  ){
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
-
     header('location: ../login.php');
 }
 
 // Connect to MySQL database
-$pdo = pdo_connect_mysql();
+//handle if user is logged in and he is admin make him can access this page
+if (isset($_SESSION['id']) && $_SESSION['isAdmin'] == 1) {
+    $id = $_SESSION['id'];
+    $sql = "SELECT * FROM users WHERE id = '$id'";
+    $result = mysqli_query($conn, $sql);
+    $row = mysqli_fetch_assoc($result);
+    $name = $row['name'];
+    $email = $row['email'];
+}
 // Get the page via GET request (URL param: page), if non exists default the page to 1
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 // Number of records to show on each page

@@ -1,7 +1,11 @@
 <?php
 include '../connection.php';
+if (!isset($_SESSION['id'])) {
+    $_SESSION['msg'] = "You must log in first";
+    echo "<script>alert('You must log in first');</script>";
+    header('location: ../login.php');
+}
 
-$pdo = pdo_connect_mysql();
 $msg = '';
 // Check that the contact ID exists
 if (isset($_GET['id'])) {

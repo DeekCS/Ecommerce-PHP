@@ -1,19 +1,20 @@
 <?php
 include '../connection.php';
+session_start();
 
-if (!isset($_SESSION['username'])) {
+if (!isset($_SESSION['id'])) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
     header('location: ../login.php');
 }
 
-$pdo = pdo_connect_mysql();
+
 $msg = '';
 // Check if POST data is not empty
 if (!empty($_POST)) {
     // Post data not empty insert a new record
     // Set-up the variables that are going to be inserted, we must check if the POST variables exist if not we can default them to blank
-    $id = isset($_POST['id']) && !empty($_POST['id']) && $_POST['id'] != 'auto' ? $_POST['id'] : NULL;
+    $id = isset($_POST['id']) && !empty($_POST['id']) && $_POST['id'] !== 'auto' ? $_POST['id'] : NULL;
     // Check if POST variable "name" exists, if not default the value to blank, basically the same for all variables
     $name = isset($_POST['name']) ? $_POST['name'] : '';
     $email = isset($_POST['email']) ? $_POST['email'] : '';

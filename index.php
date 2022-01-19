@@ -1,19 +1,14 @@
 <?php
+session_start();
 include './connection.php';
-?>
-<?php
-//session_start();
 
-if (!isset($_SESSION['username'])) {
+if (!isset($_SESSION['email'])  ){
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
-    header('location: login.php');
+//    header('location: ../login.php');
 }
-if (isset($_GET['logout'])) {
-    session_destroy();
-    unset($_SESSION['username']);
-    header("location: login.php");
-}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,10 +43,13 @@ if (isset($_GET['logout'])) {
         </div>
     <?php endif ?>
 
-    <!-- logged in user information -->
-    <?php  if (isset($_SESSION['username'])) : ?>
-        <p>Welcome <strong><?php echo $_SESSION['username']; ?></strong></p>
-        <p> <a href="index.php?logout='1'" style="color: red;">logout</a> </p>
+    <?php  if (isset($_SESSION['email'])) : ?>
+        <?php echo "<pre>";
+        print_r($_SESSION);
+        echo "</pre>";
+        ?>
+        <p>Welcome <?php echo ucfirst($_SESSION[0]['first_name']); ?></strong></p>
+        <p> <a  href="logout.php?logout=true" style="color: red;">logout</a> </p>
     <?php endif ?>
 </div>
 
