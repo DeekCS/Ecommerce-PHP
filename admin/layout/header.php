@@ -32,8 +32,8 @@
     <link href="vendor/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" media="all">
 
     <!-- Main CSS-->
-    <link href="css/theme.css" rel="stylesheet" media="all">
-    <link href="../CoolAdmin/css/theme.css" rel="stylesheet" media="all">
+    <link href="../../css/theme.css" rel="stylesheet" media="all">
+
 
 </head>
 
@@ -171,7 +171,7 @@
                                 <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                             <ul class="list-unstyled navbar__sub-list js-sub-list">
                                 <li>
-                                    <a href="../CRUD/create_user.php">Create User</a>
+                                    <a href="../users/create_user.php">Create User</a>
                                 </li>
                                 <li>
                                     <a href="index2.html">Dashboard 2</a>
