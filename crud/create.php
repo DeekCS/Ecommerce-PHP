@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php
 
 include '../connection.php';

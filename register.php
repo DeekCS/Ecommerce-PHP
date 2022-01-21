@@ -36,6 +36,12 @@
         <small class="email-error"></small>
     </div>
     <div class="input-group">
+        <label>Date of Birth
+        <input type="date" id="birthday" name="birthday" value="<?php echo $birthday; ?>"
+        </label>
+        <small class="birthday-error"></small>
+    </div>
+    <div class="input-group">
         <label>Password
         <input id="password" type="password" name="password_1" placeholder="Enter Password...">
         </label>

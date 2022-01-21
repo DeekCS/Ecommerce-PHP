@@ -4,11 +4,13 @@ let confirmPassword = document.getElementById('password2');
 let email = document.getElementById('email');
 let submit = document.getElementById('submit');
 let registerForm = document.getElementById('register');
+let birthday = document.getElementById('birthday');
 // errors
 let usernameError = document.getElementsByClassName('username-error');
 let passwordError = document.getElementsByClassName('password-error');
 let confirmPasswordError = document.getElementsByClassName('password2-error');
 let emailError = document.getElementsByClassName('email-error');
+let birthdayError = document.getElementsByClassName('birthday-error');
 
 //handle onkeyup event for username input validation
 username.onkeyup = function () {
@@ -50,6 +52,26 @@ confirmPassword.onkeyup = function () {
     }
 }
 
+//handle birthday input validation if user is more than 16 years old
+birthday.onkeyup = function () {
+    let today = new Date();
+    let birthDate = new Date(birthday.value);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    let m = today.getMonth() - birthDate.getMonth();
+
+    // if user is less than 16 years old
+    if (age < 16) {
+        birthdayError[0].innerHTML = 'You must be at least 16 years old';
+        birthdayError[0].style.color = 'red';
+    } else if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        // if user is more than 16 years old but birthday is not valid
+        birthdayError[0].innerHTML = 'Invalid Birthday';
+        birthdayError[0].style.color = 'red';
+    } else {
+        birthdayError[0].innerHTML = '';
+    }
+}
+
 // handle onsubmit event
 registerForm.onsubmit = function (e) {
     if (username.value.length < 6) {
@@ -71,7 +93,12 @@ registerForm.onsubmit = function (e) {
         confirmPasswordError[0].innerHTML = 'Passwords do not match';
         confirmPasswordError[0].style.color = 'red';
         e.preventDefault();
-    } else {
+    } if (birthday.value.length < 6 || birthday.value.length > 10) {
+        birthdayError[0].innerHTML = 'Invalid Birthday';
+        birthdayError[0].style.color = 'red';
+        e.preventDefault();
+    }
+    else {
         registerForm.submit();
     }
 }
