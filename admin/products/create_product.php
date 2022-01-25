@@ -1,43 +1,91 @@
 <?php
-require('../../config/connection.php');
+include '../../config/connection.php';
+
 if (($_SESSION['isAdmin']) != 1) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
 
     header('location: ../login.php');
 }
-$msg = '';
+
+
+$msg = "";
 $errors = array();
+if (!empty($_POST)) {
+//    $product_id = $_POST['product_id'];
+    $product_name = $_POST['product_name'];
+    $product_price = $_POST['product_price'];
+    $product_desc = $_POST['product_desc'];
+    $product_img = $_POST['product_img'];
+//    $product_img_tmp = isset($_FILES['product_img']['tmp_name']) ? $_FILES['product_img']['tmp_name'] : '';
+//    $product_img_size = isset($_FILES['product_img']['size']) ? $_FILES['product_img']['size'] : '';
+//    $product_img_error = isset($_FILES['product_img']['error']) ? $_FILES['product_img']['error'] : '';
+//    $product_img_type = isset($_FILES['product_img']['type']) ? $_FILES['product_img']['type'] : '';
+    $category_id = $_POST['category_id'];
 
-if (isset($_GET['id'])) {
-    // Select the record that is going to be deleted
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_GET['id']]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        exit('Contact doesn\'t exist with that ID!');
-    }
-    if ($user['isAdmin'] == 1) {
-        $errors[] = 'You can not delete an admin';
-    }
-    if (isset($_GET['confirm']) && empty($errors)) {
-        if ($_GET['confirm'] == 'yes') {
-            // User clicked the "Yes" button, delete record
-            $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-            $stmt->execute([$_GET['id']]);
-            $msg = 'You have deleted the contact!';
-            header('Location: ../index.php');
+//    $product_img_ext = explode('.', $product_img);
+//    $product_img_ext = strtolower(end($product_img_ext));
+//    $allowed = array('jpg', 'jpeg', 'png','PNG');
 
-        } else {
-            // User clicked the "No" button, redirect them back to the read page
-            header('Location: ../index.php');
-            exit;
-        }
+//    if (empty($product_id)) {
+//        $errors['product_id'] = "Product ID is required";
+//    }
+    if (empty($product_name)) {
+        $errors['product_name'] = "Product Name is required";
     }
-} else {
-    exit('No ID specified!');
+    if (empty($product_price)) {
+        $errors['product_price'] = "Product Price is required";
+    }
+    if (empty($product_desc)) {
+        $errors['product_desc'] = "Product Description is required";
+    }
+//    if (empty($product_img)) {
+//        $errors['product_img'] = "Product Image is required";
+//    }
+//    if (!in_array($product_img_ext, $allowed)) {
+//        $errors['product_img'] = "Invalid file type";
+//    }
+//    if ($product_img_size > 2000000) {
+//        $errors['product_img'] = "File size is too large";
+//    }
+    if (empty($category_id)) {
+        $errors['category_id'] = "Category ID is required";
+    }
+
+    //handle if product id already exists
+//    $sql = "SELECT * FROM products WHERE id = '$id'";
+//    //pdo
+//    $stmt = $pdo->query($sql);
+//    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+//    if ($row) {
+//        $errors['product_id'] = "Product ID already exists";
+//    }
+
+    // if no errors then insert into database using PDO
+    if (empty($errors)) {
+        $sql = "INSERT INTO products (product_name, price, product_desc, product_img, category_id)
+        VALUES (:product_name, :price, :product_desc, :product_img, :category_id)";
+        $stmt = $pdo->prepare($sql);
+//        $stmt->bindParam(':id', $product_id);
+        $stmt->bindParam(':product_name', $product_name);
+        $stmt->bindParam(':price', $product_price);
+        $stmt->bindParam(':product_desc', $product_desc);
+        $stmt->bindParam(':product_img', $product_img);
+        $stmt->bindParam(':category_id', $category_id);
+        $stmt->execute();
+
+        // move uploaded file to the uploads folder
+//        move_uploaded_file($product_img_tmp, "../../uploads/$product_img");
+
+        $msg = "Product added successfully";
+    }
+    else {
+        $msg = "Error adding product";
+    }
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -50,7 +98,7 @@ if (isset($_GET['id'])) {
     <meta name="keywords" content="au theme template">
 
     <!-- Title Page-->
-    <title>Forms</title>
+    <title>Create a new Product</title>
 
     <!-- Fontfaces CSS-->
     <link href="../../css/font-face.css" rel="stylesheet" media="all">
@@ -481,37 +529,84 @@ if (isset($_GET['id'])) {
             <div class="row">
                 <div class="col-lg-9">
                     <div class="card">
-                        <div class="card-header">
-                            <h2>Delete Contact #<?=$user['id']?></h2>
-                        </div>
-                        <?php if ($msg)  : ?>
-                           <div class='alert alert-danger  d-flex align-items-center justify-content-center'><?=$msg?></div>
-                       <?php else: ?>
-
-                        <div class="confirm-delete">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div>
-                                                <label class="p-5 font-weight-bold font-size-10">Are you sure want to delete this user <?=$user['id']?>?</label>
-
-                                                <a class="btn btn-danger mr-2" href="delete.php?id=<?=$user['id']?>&confirm=yes">Yes</a>
-                                                <a class="btn btn-primary " href="delete.php?id=<?=$user['id']?>&confirm=no">No</a>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                        </div>
-                        <?php endif; ?>
-                            <?php
-                            //errors printing
-                            if (isset($errors) && !empty($errors)) {
-
-                                foreach ($errors as $error) {
-                                    echo '<p class="alert alert-danger  d-flex align-items-center justify-content-center">' . $error . '</p>';
+                        <div class="card-header">CREATE NEW PRODUCT</div>
+                        <div class="card-body card-block">
+                            <form action="create_product.php" method= "post" class="">
+                                <?php
+                                foreach($errors as $error){
+                                    echo "<p class='alert w-50 alert-danger'>$error</p>";
                                 }
+                                ?>
+<!--                                <div class="form-group">-->
+<!--                                    <div class="input-group">-->
+<!--                                        <div class="input-group-addon">-->
+<!--                                            <i class="fa fa-user"></i>-->
+<!--                                        </div>-->
+<!--                                        <input type="number" id="product_id" name="product_id" placeholder="Add Product id" class="form-control">-->
+<!---->
+<!--                                    </div>-->
+<!--                                </div>-->
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-user"></i>
+                                        </div>
+                                        <input type="text" id="product" name="product_name" placeholder="Add Product Name" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-envelope"></i>
+                                        </div>
+                                        <input type="text" id="product_price" name="product_price" placeholder="Add Product Price" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-product-hunt"></i>
+                                        </div>
+                                        <input type="text" id="product_desc" name="product_desc" placeholder="Add Product Description" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-image"></i>
+                                        </div>
+                                        <input type="text" id="product_image" name="product_img" placeholder="Add Product Image" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-sort-numeric-down"></i>
+                                        </div>
+                                        <select name="category_id" id="category_id" class="form-control">
+                                            <option value="">Select Category</option>
+                                            <?php
+                                            $query = "SELECT * FROM category";
+                                            $result = $pdo->query($query);
+                                            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                                                $category_id = $row['id'];
+                                                $category_name = $row['category_name'];
 
-                            }
-                            ?>
+                                            ?>
+                                            <option value="<?=$category_id?>"><?=$category_name?></option>;
+                                           <?php }?>
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-actions form-group">
+                                    <button type="submit" class="btn btn-success btn-sm">Submit</button>
+                                </div>
+                            </form>
+                            <?php if ($msg): ?>
+                                <p><?=$msg?></p>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -545,3 +640,4 @@ if (isset($_GET['id'])) {
 
 </body>
 </html>
+

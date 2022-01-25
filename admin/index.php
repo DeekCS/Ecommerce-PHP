@@ -1,43 +1,42 @@
 <?php
-require('../../config/connection.php');
+include '../config/connection.php';
+
 if (($_SESSION['isAdmin']) != 1) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
 
     header('location: ../login.php');
 }
-$msg = '';
-$errors = array();
 
-if (isset($_GET['id'])) {
-    // Select the record that is going to be deleted
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_GET['id']]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        exit('Contact doesn\'t exist with that ID!');
-    }
-    if ($user['isAdmin'] == 1) {
-        $errors[] = 'You can not delete an admin';
-    }
-    if (isset($_GET['confirm']) && empty($errors)) {
-        if ($_GET['confirm'] == 'yes') {
-            // User clicked the "Yes" button, delete record
-            $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-            $stmt->execute([$_GET['id']]);
-            $msg = 'You have deleted the contact!';
-            header('Location: ../index.php');
+// Connect to MySQL database
 
-        } else {
-            // User clicked the "No" button, redirect them back to the read page
-            header('Location: ../index.php');
-            exit;
-        }
-    }
-} else {
-    exit('No ID specified!');
+// Get the page via GET request (URL param: page), if non exists default the page to 1
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+// Number of records to show on each page
+$records_per_page = 5;
+
+// Prepare the SQL statement and get records from our contacts table, LIMIT will determine the page
+$stmt = $pdo->prepare('SELECT * FROM contacts ORDER BY id LIMIT :current_page, :record_per_page');
+$stmt->bindValue(':current_page', ($page-1)*$records_per_page, PDO::PARAM_INT);
+$stmt->bindValue(':record_per_page', $records_per_page, PDO::PARAM_INT);
+$stmt->execute();
+// Fetch the records so we can display them in our template.
+$contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get the total number of contacts, this is so we can determine whether there should be a next and previous button
+$num_contacts = $pdo->query('SELECT COUNT(*) FROM contacts')->fetchColumn();
+//get all users from database
+$sql = $pdo->prepare('SELECT * FROM users ORDER BY id');
+$sql->execute();
+$users = $sql->fetchAll(PDO::FETCH_ASSOC);
+
+if (isset($_GET['logout'])) {
+    session_destroy();
+    unset($_SESSION['username']);
+    header("location: ../../login.php");
 }
 ?>
+<?php //include './layout/header.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -53,25 +52,21 @@ if (isset($_GET['id'])) {
     <title>Forms</title>
 
     <!-- Fontfaces CSS-->
-    <link href="../../css/font-face.css" rel="stylesheet" media="all">
-    <link href="../../vendor/font-awesome-5/css/fontawesome-all.min.css" rel="stylesheet" media="all">
-    <link href="../../vendor/font-awesome-4.7/css/font-awesome.min.css" rel="stylesheet" media="all">
-    <link href="../../vendor/mdi-font/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
+    <link href="../css/font-face.css" rel="stylesheet" media="all">
 
-    <!-- Bootstrap CSS-->
-    <link href="../../vendor/bootstrap-4.1/bootstrap.min.css" rel="stylesheet" media="all">
+    <link href="../vendor/mdi-font/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
 
-    <!-- Vendor CSS-->
-    <link href="../../vendor/animsition/animsition.min.css" rel="stylesheet" media="all">
-    <link href="../../vendor/bootstrap-progressbar/bootstrap-progressbar-3.3.4.min.css" rel="stylesheet" media="all">
-    <link href="../../vendor/wow/animate.css" rel="stylesheet" media="all">
-    <link href="../../vendor/css-hamburgers/hamburgers.min.css" rel="stylesheet" media="all">
-    <link href="../../vendor/slick/slick.css" rel="stylesheet" media="all">
-    <link href="../../vendor/select2/select2.min.css" rel="stylesheet" media="all">
-    <link href="../../vendor/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" media="all">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" integrity="sha512-c42qTSw/wPZ3/5LBzD+Bw5f7bSF2oxou6wEb+I/lqeaKV5FDIfMvvRp772y4jcJLKuGUOpbJMdg/BTl50fJYAw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="../vendor/wow/animate.css" rel="stylesheet" media="all">
+    <link href="../vendor/css-hamburgers/hamburgers.min.css" rel="stylesheet" media="all">
+    <link href="../vendor/slick/slick.css" rel="stylesheet" media="all">
+    <link href="../vendor/select2/select2.min.css" rel="stylesheet" media="all">
+    <link href="../vendor/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" media="all">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
 
     <!-- Main CSS-->
-    <link href="../../css/theme.css" rel="stylesheet" media="all">
+    <link href="../css/theme.css" rel="stylesheet" media="all">
 
 </head>
 
@@ -82,7 +77,7 @@ if (isset($_GET['id'])) {
         <div class="header-mobile__bar">
             <div class="container-fluid">
                 <div class="header-mobile-inner">
-                    <a class="logo" href="index.html">
+                    <a class="logo" href="index.php">
                         <img src="../../images/icon/logo.png" alt="CoolAdmin" />
                     </a>
                     <button class="hamburger hamburger--slider" type="button">
@@ -115,16 +110,20 @@ if (isset($_GET['id'])) {
                         </ul>
                     </li>
                     <li>
-                        <a href="chart.html">
-                            <i class="fas fa-chart-bar"></i>Charts</a>
+                        <a href="products/create_product.php">
+                            <i class="fas zmdi-file-add"></i>Create Product</a>
                     </li>
                     <li>
-                        <a href="table.html">
-                            <i class="fas fa-table"></i>Tables</a>
+                        <a href="categories/create_category.php">
+                            <i class="fas zmdi-file-add"></i>Create Category</a>
                     </li>
                     <li>
-                        <a href="form.html">
-                            <i class="far fa-check-square"></i>Forms</a>
+                        <a href="products/read_product.php">
+                            <i class="fas fa-table"></i>Show Products</a>
+                    </li>
+                    <li>
+                        <a href="categories/read_category.php">
+                            <i class="far fa-check-square"></i>Show Categories </a>
                     </li>
                     <li>
                         <a href="calendar.html">
@@ -198,7 +197,7 @@ if (isset($_GET['id'])) {
     <aside class="menu-sidebar d-none d-lg-block">
         <div class="logo">
             <a href="#">
-                <img src="images/icon/logo.png" alt="Cool Admin" />
+                <img src="../images/icon/logo.png" alt="Cool Admin" />
             </a>
         </div>
         <div class="menu-sidebar__content js-scrollbar1">
@@ -209,34 +208,38 @@ if (isset($_GET['id'])) {
                             <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                         <ul class="list-unstyled navbar__sub-list js-sub-list">
                             <li>
-                                <a href="index.html">Dashboard 1</a>
+                                <a href="products/create_product.php">
+                                    <i class="fas zmdi-file-add"></i>Create Product</a>
                             </li>
                             <li>
-                                <a href="index2.html">Dashboard 2</a>
+                                <a href="categories/create_category.php">
+                                    <i class="fas zmdi-file-add"></i>Create Category</a>
                             </li>
                             <li>
-                                <a href="index3.html">Dashboard 3</a>
+                                <a href="products/read_product.php">
+                                    <i class="fas fa-table"></i>Show Products</a>
                             </li>
                             <li>
-                                <a href="index4.html">Dashboard 4</a>
+                                <a href="categories/read_category.php">
+                                    <i class="far fa-check-square"></i>Show Categories </a>
                             </li>
                         </ul>
                     </li>
                     <li>
-                        <a href="chart.html">
-                            <i class="fas fa-chart-bar"></i>Charts</a>
+                        <a href="products/create_product.php">
+                            <i class="fas zmdi-file-add"></i>Create Product</a>
                     </li>
                     <li>
-                        <a href="table.html">
-                            <i class="fas fa-table"></i>Tables</a>
-                    </li>
-                    <li class="active">
-                        <a href="form.html">
-                            <i class="far fa-check-square"></i>Forms</a>
+                        <a href="categories/create_category.php">
+                            <i class="fas zmdi-file-add"></i>Create Category</a>
                     </li>
                     <li>
-                        <a href="calendar.html">
-                            <i class="fas fa-calendar-alt"></i>Calendar</a>
+                        <a href="products/read_product.php">
+                            <i class="fas fa-table"></i>Show Products</a>
+                    </li>
+                    <li>
+                        <a href="categories/read_category.php">
+                            <i class="far fa-check-square"></i>Show Categories </a>
                     </li>
                     <li>
                         <a href="map.html">
@@ -326,7 +329,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="mess__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-06.jpg" alt="Michelle Moreno" />
+                                                <img src="../images/icon/avatar-06.jpg" alt="Michelle Moreno" />
                                             </div>
                                             <div class="content">
                                                 <h6>Michelle Moreno</h6>
@@ -336,7 +339,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="mess__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-04.jpg" alt="Diane Myers" />
+                                                <img src="../images/icon/avatar-04.jpg" alt="Diane Myers" />
                                             </div>
                                             <div class="content">
                                                 <h6>Diane Myers</h6>
@@ -358,7 +361,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-06.jpg" alt="Cynthia Harvey" />
+                                                <img src="../images/icon/avatar-06.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -367,7 +370,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-05.jpg" alt="Cynthia Harvey" />
+                                                <img src="../images/icon/avatar-05.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -376,7 +379,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-04.jpg" alt="Cynthia Harvey" />
+                                                <img src="../images/icon/avatar-04.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -431,7 +434,7 @@ if (isset($_GET['id'])) {
                             <div class="account-wrap">
                                 <div class="account-item clearfix js-item-menu">
                                     <div class="image">
-                                        <img src="images/icon/avatar-01.jpg" alt="John Doe" />
+                                        <img src="../images/icon/avatar-01.jpg" alt="John Doe" />
                                     </div>
                                     <div class="content">
                                         <a class="js-acc-btn" href="#">john doe</a>
@@ -440,7 +443,7 @@ if (isset($_GET['id'])) {
                                         <div class="info clearfix">
                                             <div class="image">
                                                 <a href="#">
-                                                    <img src="images/icon/avatar-01.jpg" alt="John Doe" />
+                                                    <img src="../images/icon/avatar-01.jpg" alt="John Doe" />
                                                 </a>
                                             </div>
                                             <div class="content">
@@ -477,71 +480,233 @@ if (isset($_GET['id'])) {
             </div>
         </header>
         <!-- HEADER DESKTOP-->
-        <div class="container pt-5 mt-5">
-            <div class="row">
-                <div class="col-lg-9">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2>Delete Contact #<?=$user['id']?></h2>
+            <!-- MAIN CONTENT-->
+            <div class="main-content">
+                <div class="section__content section__content--p30">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="overview-wrap">
+                                    <h2 class="title-1">overview</h2>
+                                    <a href="contacts/create.php" class="au-btn au-btn-icon au-btn--blue">
+                                        <i class="zmdi zmdi-plus"></i>add member</a>
+                                </div>
+                            </div>
                         </div>
-                        <?php if ($msg)  : ?>
-                           <div class='alert alert-danger  d-flex align-items-center justify-content-center'><?=$msg?></div>
-                       <?php else: ?>
-
-                        <div class="confirm-delete">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div>
-                                                <label class="p-5 font-weight-bold font-size-10">Are you sure want to delete this user <?=$user['id']?>?</label>
-
-                                                <a class="btn btn-danger mr-2" href="delete.php?id=<?=$user['id']?>&confirm=yes">Yes</a>
-                                                <a class="btn btn-primary " href="delete.php?id=<?=$user['id']?>&confirm=no">No</a>
+                        <div class="row m-t-25">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="overview-item overview-item--c1">
+                                    <div class="overview__inner">
+                                        <div class="overview-box clearfix">
+                                            <div class="icon">
+                                                <i class="zmdi zmdi-account-o"></i>
                                             </div>
-
+                                            <div class="text">
+                                                <h2> <?php
+                                                    $stmt = $pdo->prepare('SELECT * FROM contacts ORDER BY id DESC');
+                                                    $num_contacts = $pdo->query('SELECT COUNT(*) FROM contacts')->fetchColumn();
+                                                    $stmt->execute();
+                                                    $num_contacts = $stmt->rowCount();
+                                                    echo $num_contacts;
+                                                    ?></h2>
+                                                <span>Number Of Contacts</span>
+                                            </div>
+                                        </div>
+                                        <div class="overview-chart">
+                                            <canvas id="widgetChart1"></canvas>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="overview-item overview-item--c2">
+                                    <div class="overview__inner">
+                                        <div class="overview-box clearfix">
+                                            <div class="icon">
+                                                <i class="zmdi zmdi-account-o"></i>
+                                            </div>
+                                            <div class="text">
+                                                <h2> <?php
+                                                    $stmt = $pdo->prepare('SELECT * FROM users ORDER BY id DESC');
+                                                    $num_contacts = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+                                                    $stmt->execute();
+                                                    $num_contacts = $stmt->rowCount();
+                                                    echo $num_contacts;
+                                                    ?></h2>
+                                                <span>Number Of Members</span>
+                                            </div>
+                                        </div>
+                                        <div class="overview-chart">
+                                            <canvas id="widgetChart2"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="overview-item overview-item--c3">
+                                    <div class="overview__inner">
+                                        <div class="overview-box clearfix">
+                                            <div class="icon">
+                                                <i class="zmdi zmdi-calendar-note"></i>
+                                            </div>
+                                            <div class="text">
+                                                <h2>1,086</h2>
+                                                <span>this week</span>
+                                            </div>
+                                        </div>
+                                        <div class="overview-chart">
+                                            <canvas id="widgetChart3"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="overview-item overview-item--c4">
+                                    <div class="overview__inner">
+                                        <div class="overview-box clearfix">
+                                            <div class="icon">
+                                                <i class="zmdi zmdi-money"></i>
+                                            </div>
+                                            <div class="text">
+                                                <h2>$1,060,386</h2>
+                                                <span>total earnings</span>
+                                            </div>
+                                        </div>
+                                        <div class="overview-chart">
+                                            <canvas id="widgetChart4"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <?php endif; ?>
-                            <?php
-                            //errors printing
-                            if (isset($errors) && !empty($errors)) {
 
-                                foreach ($errors as $error) {
-                                    echo '<p class="alert alert-danger  d-flex align-items-center justify-content-center">' . $error . '</p>';
-                                }
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <h2 class="title-1 m-b-25">Read Contacts</h2>
+                                <div class="table-responsive table--no-card m-b-40">
+                                    <table class="table table-borderless table-striped table-earning">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th class="text-right">Title</th>
+                                                <th class="text-right">Created</th>
+                                                <th class="text-right">Edit/Remove</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <?php foreach ($contacts as $contact): ?>
+                                            <tr>
+                                                <td><?=$contact['id']?></td>
+                                                <td><?=$contact['name']?></td>
+                                                <td><?=$contact['email']?></td>
+                                                <td><?=$contact['title']?></td>
+                                                <td><?=$contact['created']?></td>
+                                                <td class="actions">
+                                                    <a href="contacts/update.php?id=<?=$contact['id']?>" class="edit"><i class="fas fa-pencil-alt"></i></a>
+                                                    <a href="contacts/delete.php?id=<?=$contact['id']?>" class="trash text-danger"><i class="fas fa-trash "></i></a>
 
-                            }
-                            ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+                            <div class="pagination">
+                                <?php if ($page > 1): ?>
+                                    <a href="contacts/read.php?page=<?=$page-1?>"><i class="fas fa-angle-double-left fa-sm"></i></a>
+                                <?php endif; ?>
+                                <?php if ($page*$records_per_page < $num_contacts): ?>
+                                    <a href="contacts/read.php?page=<?=$page+1?>"><i class="fas fa-angle-double-right fa-sm"></i></a>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="col-lg-12">
+
+                                <h2 class="title-1 m-b-25">All Users</h2>
+                                <div class="overview-wrap">
+                                    <a href="users/create_user.php" class="au-btn au-btn-icon au-btn--blue">
+                                        <i class="zmdi zmdi-plus"></i>add user</a>
+                                </div>
+                                <div class="table-responsive table--no-card m-b-40">
+                                    <table class="table table-borderless table-striped table-earning">
+                                        <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th class="text-right">Date Of Birth</th>
+                                            <th class="text-right">Age</th>"
+                                            <th class="text-right">Status</th>
+                                            <th class="text-right">Edit/Remove</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <?php
+                                        foreach ($users as $user): ?>
+                                            <tr>
+                                                <td><?=$user['id']?></td>
+                                                <td><?=$user['username']?></td>
+                                                <td><?=$user['email']?></td>
+                                                <td><?=$user['date_of_birth']?></td>
+                                                <td><?=$user['age']?></td>
+                                                <td class="text-right"><?php if ($user['isAdmin'] == 1): ?>
+                                                        <span class="badge badge-success">Admin</span>
+                                                    <?php else: ?>
+                                                        <span class="badge badge-danger">User</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="actions">
+                                                    <a href="users/edit.php?id=<?=$user['id']?>" class="edit"><i class="fas fa-pencil-alt"></i></a>
+                                                    <a href="users/delete.php?id=<?=$user['id']?>" class="trash text-danger"><i class="fas fa-trash"></i></a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="copyright">
+                                    <p>Copyright © 2018 Colorlib. All rights reserved. Template by <a href="https://colorlib.com">Colorlib</a>.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
-
 <!-- Jquery JS-->
-<script src="../../vendor/jquery-3.2.1.min.js"></script>
+<script src="../vendor/jquery-3.2.1.min.js"></script>
 <!-- Bootstrap JS-->
-<script src="../../vendor/bootstrap-4.1/popper.min.js"></script>
-<script src="../../vendor/bootstrap-4.1/bootstrap.min.js"></script>
+<script src="../vendor/bootstrap-4.1/popper.min.js"></script>
+<script src="../vendor/bootstrap-4.1/bootstrap.min.js"></script>
 <!-- Vendor JS       -->
-<script src="../../vendor/slick/slick.min.js">
+<script src="../vendor/slick/slick.min.js">
 </script>
-<script src="../../vendor/wow/wow.min.js"></script>
-<script src="../../vendor/animsition/animsition.min.js"></script>
-<script src="../../vendor/bootstrap-progressbar/bootstrap-progressbar.min.js">
+<script src="../vendor/wow/wow.min.js"></script>
+<script src="../vendor/animsition/animsition.min.js"></script>
+<script src="../vendor/bootstrap-progressbar/bootstrap-progressbar.min.js">
 </script>
-<script src="../../vendor/counter-up/jquery.waypoints.min.js"></script>
-<script src="../../vendor/counter-up/jquery.counterup.min.js">
+<script src="../vendor/counter-up/jquery.waypoints.min.js"></script>
+<script src="../vendor/counter-up/jquery.counterup.min.js">
 </script>
-<script src="../../vendor/circle-progress/circle-progress.min.js"></script>
-<script src="../../vendor/perfect-scrollbar/perfect-scrollbar.js"></script>
-<script src="../../vendor/chartjs/Chart.bundle.min.js"></script>
-<script src="../../vendor/select2/select2.min.js">
+<script src="../vendor/circle-progress/circle-progress.min.js"></script>
+<script src="../vendor/perfect-scrollbar/perfect-scrollbar.js"></script>
+<script src="../vendor/chartjs/Chart.bundle.min.js"></script>
+<script src="../vendor/select2/select2.min.js">
 </script>
 
 <!-- Main JS-->
-<script src="../../js/main.js"></script>
-
+<script src="script/validate.js"
+<script src="../js/main.js"></script>
 </body>
 </html>
+

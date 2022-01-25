@@ -1,5 +1,5 @@
-<?php include('server.php') ?>
-    <!DOCTYPE html>
+<?php include('./config/server.php') ?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Registration system PHP and MySQL</title>

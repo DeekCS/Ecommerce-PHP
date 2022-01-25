@@ -1,43 +1,25 @@
 <?php
-require('../../config/connection.php');
+include '../../config/connection.php';
+
 if (($_SESSION['isAdmin']) != 1) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
 
     header('location: ../login.php');
 }
-$msg = '';
-$errors = array();
 
-if (isset($_GET['id'])) {
-    // Select the record that is going to be deleted
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_GET['id']]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        exit('Contact doesn\'t exist with that ID!');
-    }
-    if ($user['isAdmin'] == 1) {
-        $errors[] = 'You can not delete an admin';
-    }
-    if (isset($_GET['confirm']) && empty($errors)) {
-        if ($_GET['confirm'] == 'yes') {
-            // User clicked the "Yes" button, delete record
-            $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-            $stmt->execute([$_GET['id']]);
-            $msg = 'You have deleted the contact!';
-            header('Location: ../index.php');
+$sql = "SELECT * FROM products";
+//pdo
+$stmt = $pdo->query($sql);
+$products = $stmt->fetchAll();
 
-        } else {
-            // User clicked the "No" button, redirect them back to the read page
-            header('Location: ../index.php');
-            exit;
-        }
-    }
-} else {
-    exit('No ID specified!');
-}
+$sql = "SELECT * FROM category";
+$stmt = $pdo->query($sql);
+$categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -50,7 +32,7 @@ if (isset($_GET['id'])) {
     <meta name="keywords" content="au theme template">
 
     <!-- Title Page-->
-    <title>Forms</title>
+    <title>Create a new Product</title>
 
     <!-- Fontfaces CSS-->
     <link href="../../css/font-face.css" rel="stylesheet" media="all">
@@ -198,7 +180,7 @@ if (isset($_GET['id'])) {
     <aside class="menu-sidebar d-none d-lg-block">
         <div class="logo">
             <a href="#">
-                <img src="images/icon/logo.png" alt="Cool Admin" />
+                <img src="../../images/icon/logo.png" alt="Cool Admin" />
             </a>
         </div>
         <div class="menu-sidebar__content js-scrollbar1">
@@ -326,7 +308,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="mess__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-06.jpg" alt="Michelle Moreno" />
+                                                <img src="../../images/icon/avatar-06.jpg" alt="Michelle Moreno" />
                                             </div>
                                             <div class="content">
                                                 <h6>Michelle Moreno</h6>
@@ -336,7 +318,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="mess__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-04.jpg" alt="Diane Myers" />
+                                                <img src="../../images/icon/avatar-04.jpg" alt="Diane Myers" />
                                             </div>
                                             <div class="content">
                                                 <h6>Diane Myers</h6>
@@ -358,7 +340,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-06.jpg" alt="Cynthia Harvey" />
+                                                <img src="../../images/icon/avatar-06.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -367,7 +349,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-05.jpg" alt="Cynthia Harvey" />
+                                                <img src="../../images/icon/avatar-05.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -376,7 +358,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-04.jpg" alt="Cynthia Harvey" />
+                                                <img src="../../images/icon/avatar-04.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -431,7 +413,7 @@ if (isset($_GET['id'])) {
                             <div class="account-wrap">
                                 <div class="account-item clearfix js-item-menu">
                                     <div class="image">
-                                        <img src="images/icon/avatar-01.jpg" alt="John Doe" />
+                                        <img src="../../images/icon/avatar-01.jpg" alt="John Doe" />
                                     </div>
                                     <div class="content">
                                         <a class="js-acc-btn" href="#">john doe</a>
@@ -440,7 +422,7 @@ if (isset($_GET['id'])) {
                                         <div class="info clearfix">
                                             <div class="image">
                                                 <a href="#">
-                                                    <img src="images/icon/avatar-01.jpg" alt="John Doe" />
+                                                    <img src="../../images/icon/avatar-01.jpg" alt="John Doe" />
                                                 </a>
                                             </div>
                                             <div class="content">
@@ -479,41 +461,34 @@ if (isset($_GET['id'])) {
         <!-- HEADER DESKTOP-->
         <div class="container pt-5 mt-5">
             <div class="row">
-                <div class="col-lg-9">
+                <?php foreach ($products as $product){?>
+                <div class="col-md-3">
                     <div class="card">
-                        <div class="card-header">
-                            <h2>Delete Contact #<?=$user['id']?></h2>
-                        </div>
-                        <?php if ($msg)  : ?>
-                           <div class='alert alert-danger  d-flex align-items-center justify-content-center'><?=$msg?></div>
-                       <?php else: ?>
+                        <img class="card-img-top" style="height: 350px"  src="<?php echo $product['product_img']?>" alt="Card image cap">
+                        <div class="card-body">
+                            <h4 class="card-title mb-3"><?php echo $product['product_name']?>
+                                <p>
+                                    <a href="edit_product.php?id=<?=$product['id']?>" class="edit"><i class="fas fa-pencil-alt"></i></a>
+                                    <a href="delete_product.php?id=<?=$product['id']?>" class="delete"><i class="fas fa-trash-alt"></i></a>
+                                </p>
+                            </h4>
+                            <p class="card-text">
+                            <h3 class="text-danger"><?php echo $product['price']?></h3>
+                            </p>
+                            <p class="card-text"><?php echo $product['product_desc']?></p>
 
-                        <div class="confirm-delete">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div>
-                                                <label class="p-5 font-weight-bold font-size-10">Are you sure want to delete this user <?=$user['id']?>?</label>
 
-                                                <a class="btn btn-danger mr-2" href="delete.php?id=<?=$user['id']?>&confirm=yes">Yes</a>
-                                                <a class="btn btn-primary " href="delete.php?id=<?=$user['id']?>&confirm=no">No</a>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                        </div>
-                        <?php endif; ?>
                             <?php
-                            //errors printing
-                            if (isset($errors) && !empty($errors)) {
-
-                                foreach ($errors as $error) {
-                                    echo '<p class="alert alert-danger  d-flex align-items-center justify-content-center">' . $error . '</p>';
+                            foreach($categories as $category){
+                                if($category['id'] === $product['category_id']){
+                                    echo '<span class="badge badge-secondary">'.$category['category_name'].'</span>';
                                 }
-
                             }
                             ?>
+                        </div>
                     </div>
                 </div>
+                <?php }?>
             </div>
         </div>
     </div>
@@ -542,6 +517,5 @@ if (isset($_GET['id'])) {
 
 <!-- Main JS-->
 <script src="../../js/main.js"></script>
-
 </body>
 </html>

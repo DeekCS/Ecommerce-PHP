@@ -1,5 +1,6 @@
 <?php
-require('../../config/connection.php');
+include '../../config/connection.php';
+
 if (($_SESSION['isAdmin']) != 1) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
@@ -9,35 +10,72 @@ if (($_SESSION['isAdmin']) != 1) {
 $msg = '';
 $errors = array();
 
-if (isset($_GET['id'])) {
-    // Select the record that is going to be deleted
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_GET['id']]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        exit('Contact doesn\'t exist with that ID!');
-    }
-    if ($user['isAdmin'] == 1) {
-        $errors[] = 'You can not delete an admin';
-    }
-    if (isset($_GET['confirm']) && empty($errors)) {
-        if ($_GET['confirm'] == 'yes') {
-            // User clicked the "Yes" button, delete record
-            $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-            $stmt->execute([$_GET['id']]);
-            $msg = 'You have deleted the contact!';
-            header('Location: ../index.php');
+if (isset($_GET['id'])){
+    if (!empty($_POST)){
+        $product_id = isset($_POST['product_id']) ? $_POST['product_id'] : NULL;
+        $product_name = isset($_POST['product_name']) ? $_POST['product_name'] : '';
+        $product_price = isset($_POST['product_price']) ? $_POST['product_price'] : '';
+        $product_desc = isset($_POST['product_desc']) ? $_POST['product_desc'] : '';
+        $product_img = isset($_POST['product_img']) ? $_POST['product_img'] : '';
+        $category_id = isset($_POST['category_id']) ? $_POST['category_id'] : 0;
 
-        } else {
-            // User clicked the "No" button, redirect them back to the read page
-            header('Location: ../index.php');
-            exit;
+        if (empty($product_id)) {
+            $errors['product_id'] = "Product ID is required";
+        }
+        if (empty($product_name)) {
+            $errors['product_name'] = "Product Name is required";
+        }
+        if (empty($product_price)) {
+            $errors['product_price'] = "Product Price is required";
+        }
+        if (empty($category_id)) {
+            $errors['category_id'] = "Category ID is required";
+        }
+
+        // if no errors
+        if (empty($errors)) {
+            // update product in database using pdo
+            $sql = "UPDATE products SET product_name = 
+             :product_name, price = :price, product_desc = :product_desc, 
+            product_img = :product_img, category_id = :category_id WHERE id = :product_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':product_id', $product_id);
+            $stmt->bindParam(':product_name', $product_name);
+            $stmt->bindParam(':price', $product_price);
+            $stmt->bindParam(':product_desc', $product_desc);
+            $stmt->bindParam(':product_img', $product_img);
+            $stmt->bindParam(':category_id', $category_id);
+            $stmt->execute();
+            $msg = "Product updated successfully";
+        }
+        else {
+            $msg = "Error updating product";
         }
     }
-} else {
-    exit('No ID specified!');
+      $sql = "SELECT * FROM products WHERE id = :product_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':product_id', $_GET['id']);
+    $stmt->execute();
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (empty($product)) {
+        $msg = "Product not found";
+    }
+
+    // get categories from database
+    $sql = "SELECT * FROM category";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+}
+
+else {
+    header('location: ../products.php');
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -50,7 +88,7 @@ if (isset($_GET['id'])) {
     <meta name="keywords" content="au theme template">
 
     <!-- Title Page-->
-    <title>Forms</title>
+    <title>UPDATE Product</title>
 
     <!-- Fontfaces CSS-->
     <link href="../../css/font-face.css" rel="stylesheet" media="all">
@@ -198,7 +236,7 @@ if (isset($_GET['id'])) {
     <aside class="menu-sidebar d-none d-lg-block">
         <div class="logo">
             <a href="#">
-                <img src="images/icon/logo.png" alt="Cool Admin" />
+                <img src="../../images/icon/logo.png" alt="Cool Admin" />
             </a>
         </div>
         <div class="menu-sidebar__content js-scrollbar1">
@@ -326,7 +364,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="mess__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-06.jpg" alt="Michelle Moreno" />
+                                                <img src="../../images/icon/avatar-06.jpg" alt="Michelle Moreno" />
                                             </div>
                                             <div class="content">
                                                 <h6>Michelle Moreno</h6>
@@ -336,7 +374,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="mess__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-04.jpg" alt="Diane Myers" />
+                                                <img src="../../images/icon/avatar-04.jpg" alt="Diane Myers" />
                                             </div>
                                             <div class="content">
                                                 <h6>Diane Myers</h6>
@@ -358,7 +396,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-06.jpg" alt="Cynthia Harvey" />
+                                                <img src="../../images/icon/avatar-06.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -367,7 +405,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-05.jpg" alt="Cynthia Harvey" />
+                                                <img src="../../images/icon/avatar-05.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -376,7 +414,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <div class="email__item">
                                             <div class="image img-cir img-40">
-                                                <img src="images/icon/avatar-04.jpg" alt="Cynthia Harvey" />
+                                                <img src="../../images/icon/avatar-04.jpg" alt="Cynthia Harvey" />
                                             </div>
                                             <div class="content">
                                                 <p>Meeting about new dashboard...</p>
@@ -431,7 +469,7 @@ if (isset($_GET['id'])) {
                             <div class="account-wrap">
                                 <div class="account-item clearfix js-item-menu">
                                     <div class="image">
-                                        <img src="images/icon/avatar-01.jpg" alt="John Doe" />
+                                        <img src="../../images/icon/avatar-01.jpg" alt="John Doe" />
                                     </div>
                                     <div class="content">
                                         <a class="js-acc-btn" href="#">john doe</a>
@@ -440,7 +478,7 @@ if (isset($_GET['id'])) {
                                         <div class="info clearfix">
                                             <div class="image">
                                                 <a href="#">
-                                                    <img src="images/icon/avatar-01.jpg" alt="John Doe" />
+                                                    <img src="../../images/icon/avatar-01.jpg" alt="John Doe" />
                                                 </a>
                                             </div>
                                             <div class="content">
@@ -482,36 +520,80 @@ if (isset($_GET['id'])) {
                 <div class="col-lg-9">
                     <div class="card">
                         <div class="card-header">
-                            <h2>Delete Contact #<?=$user['id']?></h2>
+                            Update Product #<?=$product['id']?>
                         </div>
-                        <?php if ($msg)  : ?>
-                           <div class='alert alert-danger  d-flex align-items-center justify-content-center'><?=$msg?></div>
-                       <?php else: ?>
-
-                        <div class="confirm-delete">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div>
-                                                <label class="p-5 font-weight-bold font-size-10">Are you sure want to delete this user <?=$user['id']?>?</label>
-
-                                                <a class="btn btn-danger mr-2" href="delete.php?id=<?=$user['id']?>&confirm=yes">Yes</a>
-                                                <a class="btn btn-primary " href="delete.php?id=<?=$user['id']?>&confirm=no">No</a>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                        </div>
-                        <?php endif; ?>
-                            <?php
-                            //errors printing
-                            if (isset($errors) && !empty($errors)) {
-
-                                foreach ($errors as $error) {
-                                    echo '<p class="alert alert-danger  d-flex align-items-center justify-content-center">' . $error . '</p>';
+                        <div class="card-body card-block">
+                            <form action="edit_product.php?id=<?=$product['id']?>" method= "post" class="">
+                                <?php
+                                foreach($errors as $error){
+                                    echo "<p class='alert w-50 alert-danger'>$error</p>";
                                 }
-
-                            }
-                            ?>
+                                ?>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-sort-numeric-asc"></i>
+                                        </div>
+                                        <input class="ml-2" type="text" name="product_id" placeholder="26" value="<?=$product['id']?>" readonly>
+                                    </div>
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-user"></i>
+                                        </div>
+                                        <input type="text" id="product_name" name="product_name" value="<?=$product['product_name']?>" placeholder="Enter product name" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-envelope"></i>
+                                        </div>
+                                        <input type="number" id="product_price" name="product_price" value="<?=$product['price']?>" placeholder="Enter Product Price" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-asterisk"></i>
+                                        </div>
+                                        <input type="text" id="product_desc" name="product_desc" placeholder="Enter product description" value="<?=$product['product_desc']?>" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-image"></i>
+                                        </div>
+                                        <input type="text" id="product_img" name="product_img" placeholder="Enter IMG URL" class="form-control" value="<?= $product['product_img']?>">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-sort-numeric-down"></i>
+                                        </div>
+                                        <select name="category_id" id="category_id" class="form-control">
+                                            <option value="">Select Category</option>
+                                            <?php
+                                            foreach($categories as $category){
+                                                if($category['id'] == $product['category_id']){
+                                                    echo "<option value='{$category['id']}' selected>{$category['category_name']}</option>";
+                                                }else{
+                                                    echo "<option value='{$category['id']}'>{$category['category_name']}</option>";
+                                                }
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-actions form-group">
+                                    <button type="submit" class="btn btn-success btn-sm">Update</button>
+                                </div>
+                            </form>
+                            <?php if (empty($errors)): ?>
+                                <p class="alert alert-success"><?=$msg?></p>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -542,6 +624,6 @@ if (isset($_GET['id'])) {
 
 <!-- Main JS-->
 <script src="../../js/main.js"></script>
-
 </body>
 </html>
+

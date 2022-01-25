@@ -105,7 +105,7 @@ if (isset($_POST['reg_user'])) {
                     $_SESSION['isAdmin'] = true;
                     $query = "UPDATE users SET last_login = NOW() WHERE username = '$username'";
                     $stmt = $pdo->query($query);
-                    header('location: CoolAdmin/dashboard.php');
+                    header('location: admin/index.php');
                 } else {
                     $query = "UPDATE users SET last_login = NOW() WHERE username = '$username'";
                     $stmt = $pdo->query($query);

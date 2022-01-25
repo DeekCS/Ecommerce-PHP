@@ -1,43 +1,24 @@
 <?php
-require('../../config/connection.php');
+
+include '../../config/connection.php';
+
 if (($_SESSION['isAdmin']) != 1) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
 
     header('location: ../login.php');
 }
-$msg = '';
-$errors = array();
 
-if (isset($_GET['id'])) {
-    // Select the record that is going to be deleted
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_GET['id']]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        exit('Contact doesn\'t exist with that ID!');
-    }
-    if ($user['isAdmin'] == 1) {
-        $errors[] = 'You can not delete an admin';
-    }
-    if (isset($_GET['confirm']) && empty($errors)) {
-        if ($_GET['confirm'] == 'yes') {
-            // User clicked the "Yes" button, delete record
-            $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-            $stmt->execute([$_GET['id']]);
-            $msg = 'You have deleted the contact!';
-            header('Location: ../index.php');
-
-        } else {
-            // User clicked the "No" button, redirect them back to the read page
-            header('Location: ../index.php');
-            exit;
-        }
-    }
-} else {
-    exit('No ID specified!');
-}
+$sql = $pdo->prepare('SELECT * FROM category ORDER BY id');
+$sql->execute();
+$categories = $sql->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -50,7 +31,7 @@ if (isset($_GET['id'])) {
     <meta name="keywords" content="au theme template">
 
     <!-- Title Page-->
-    <title>Forms</title>
+    <title>Show Categories</title>
 
     <!-- Fontfaces CSS-->
     <link href="../../css/font-face.css" rel="stylesheet" media="all">
@@ -480,44 +461,42 @@ if (isset($_GET['id'])) {
         <div class="container pt-5 mt-5">
             <div class="row">
                 <div class="col-lg-9">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2>Delete Contact #<?=$user['id']?></h2>
-                        </div>
-                        <?php if ($msg)  : ?>
-                           <div class='alert alert-danger  d-flex align-items-center justify-content-center'><?=$msg?></div>
-                       <?php else: ?>
 
-                        <div class="confirm-delete">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div>
-                                                <label class="p-5 font-weight-bold font-size-10">Are you sure want to delete this user <?=$user['id']?>?</label>
-
-                                                <a class="btn btn-danger mr-2" href="delete.php?id=<?=$user['id']?>&confirm=yes">Yes</a>
-                                                <a class="btn btn-primary " href="delete.php?id=<?=$user['id']?>&confirm=no">No</a>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                        </div>
-                        <?php endif; ?>
+                    <h2 class="title-1 m-b-25">All Categories</h2>
+                    <div class="overview-wrap mb-4">
+                        <a href="../categories/create_category.php" class="au-btn au-btn-icon au-btn--blue">
+                            <i class="zmdi zmdi-plus"></i>Add Category</a>
+                    </div>
+                    <div class="table-responsive table--no-card m-b-40">
+                        <table class="table table-borderless table-striped table-earning">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Category Name</th>
+                                <th>Edit/Remove</th>
+                            </tr>
+                            </thead>
+                            <tbody>
                             <?php
-                            //errors printing
-                            if (isset($errors) && !empty($errors)) {
-
-                                foreach ($errors as $error) {
-                                    echo '<p class="alert alert-danger  d-flex align-items-center justify-content-center">' . $error . '</p>';
-                                }
-
-                            }
-                            ?>
+                            foreach ($categories as $category): ?>
+                                <tr>
+                                    <td><?=$category['id']?></td>
+                                    <td><?=$category['category_name']?></td>
+                                    <td class="actions">
+                                        <a href="../categories/edit_category.php?id=<?=$category['id']?>" class="edit"><i class="fas fa-pencil-alt"></i></a>
+                                        <a href="../categories/delete_category.php?id=<?=$category['id']?>" class="trash text-danger"><i class="fas fa-trash"></i></a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- Jquery JS-->
 <script src="../../vendor/jquery-3.2.1.min.js"></script>
@@ -545,3 +524,9 @@ if (isset($_GET['id'])) {
 
 </body>
 </html>
+
+
+
+
+
+

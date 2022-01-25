@@ -1,43 +1,48 @@
 <?php
-require('../../config/connection.php');
+include '../../config/connection.php';
+
 if (($_SESSION['isAdmin']) != 1) {
     $_SESSION['msg'] = "You must log in first";
     echo "<script>alert('You must log in first');</script>";
 
     header('location: ../login.php');
 }
-$msg = '';
+
+$msg = "";
 $errors = array();
+if (!empty($_POST)) {
+    $category_name = $_POST['category_name'];
 
-if (isset($_GET['id'])) {
-    // Select the record that is going to be deleted
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_GET['id']]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        exit('Contact doesn\'t exist with that ID!');
+    if (empty($category_name)) {
+        $errors['$category_name'] = "Category Name is required";
     }
-    if ($user['isAdmin'] == 1) {
-        $errors[] = 'You can not delete an admin';
-    }
-    if (isset($_GET['confirm']) && empty($errors)) {
-        if ($_GET['confirm'] == 'yes') {
-            // User clicked the "Yes" button, delete record
-            $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-            $stmt->execute([$_GET['id']]);
-            $msg = 'You have deleted the contact!';
-            header('Location: ../index.php');
 
-        } else {
-            // User clicked the "No" button, redirect them back to the read page
-            header('Location: ../index.php');
-            exit;
-        }
+//    handle if product id already exists
+    $sql = "SELECT * FROM category WHERE category_name = '$category_name'";
+    //pdo
+    $stmt = $pdo->query($sql);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
+        $errors['$category_name'] = "Category Name already exists";
     }
-} else {
-    exit('No ID specified!');
+
+    // if no errors then insert into database using PDO
+    if (empty($errors)) {
+        $sql = "INSERT INTO category (category_name)
+        VALUES (:category_name)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':category_name', $category_name);
+        $stmt->execute();
+
+        $msg = "Category added successfully";
+    }
+    else {
+        $msg = "Error adding Category";
+    }
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -50,7 +55,7 @@ if (isset($_GET['id'])) {
     <meta name="keywords" content="au theme template">
 
     <!-- Title Page-->
-    <title>Forms</title>
+    <title>Create a new Category</title>
 
     <!-- Fontfaces CSS-->
     <link href="../../css/font-face.css" rel="stylesheet" media="all">
@@ -481,37 +486,31 @@ if (isset($_GET['id'])) {
             <div class="row">
                 <div class="col-lg-9">
                     <div class="card">
-                        <div class="card-header">
-                            <h2>Delete Contact #<?=$user['id']?></h2>
-                        </div>
-                        <?php if ($msg)  : ?>
-                           <div class='alert alert-danger  d-flex align-items-center justify-content-center'><?=$msg?></div>
-                       <?php else: ?>
-
-                        <div class="confirm-delete">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div>
-                                                <label class="p-5 font-weight-bold font-size-10">Are you sure want to delete this user <?=$user['id']?>?</label>
-
-                                                <a class="btn btn-danger mr-2" href="delete.php?id=<?=$user['id']?>&confirm=yes">Yes</a>
-                                                <a class="btn btn-primary " href="delete.php?id=<?=$user['id']?>&confirm=no">No</a>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                        </div>
-                        <?php endif; ?>
-                            <?php
-                            //errors printing
-                            if (isset($errors) && !empty($errors)) {
-
-                                foreach ($errors as $error) {
-                                    echo '<p class="alert alert-danger  d-flex align-items-center justify-content-center">' . $error . '</p>';
+                        <div class="card-header">CREATE NEW PRODUCT</div>
+                        <div class="card-body card-block">
+                            <form action="create_category.php" method= "post" class="">
+                                <?php
+                                foreach($errors as $error){
+                                    echo "<p class='alert w-50 alert-danger'>$error</p>";
                                 }
-
-                            }
-                            ?>
+                                ?>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-envelope"></i>
+                                        </div>
+                                        <input type="text" id="category_name" name="category_name" placeholder="Add Category name" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-actions form-group">
+                                    <button type="submit" class="btn btn-success btn-sm">Submit</button>
+                                </div>
+                            </form>
+                            <?php if ($msg): ?>
+                                <p><?=$msg?></p>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -545,3 +544,4 @@ if (isset($_GET['id'])) {
 
 </body>
 </html>
+
